@@ -4,31 +4,37 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'], 
+        mono: ['JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
+      },
       colors: {
-        'accent': '#2dd4bf',
-        'status-ok': '#22c55e',
-        'status-bad': '#ef4444',
-        
-        // Channels
-        'channel-x': '#22c55e', 
+        accent: '#3b82f6', 
+        'channel-x': '#10b981', 
         'channel-y': '#3b82f6', 
-        'channel-z': '#f97316', 
+        'channel-z': '#f59e0b', 
         'channel-w': '#ef4444', 
       },
-      backgroundImage: {
-        // Richer, multi-stop gradients
-        'aurora-light': 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)',
-        'nebula-dark': 'radial-gradient(circle at 0% 0%, #3b0764 0%, #0f0c29 50%, #000000 100%)', 
+      animation: {
+        'blob': 'blob 10s infinite',
+        'fade-in': 'fadeIn 0.5s ease-out forwards',
+      },
+      keyframes: {
+        blob: {
+          '0%': { transform: 'translate(0px, 0px) scale(1)' },
+          '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+          '100%': { transform: 'translate(0px, 0px) scale(1)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
       },
       boxShadow: {
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-        'glass-light': '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-        'glow-sm': '0 0 10px -2px var(--tw-shadow-color)',
-        'glow-md': '0 0 20px -5px var(--tw-shadow-color)',
-      },
-      fontFamily: {
-        sans: ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        'glass-edge': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.5), 0 4px 20px rgba(0, 0, 0, 0.05)',
+        'glass-edge-dark': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.4)',
+        'neon': '0 0 10px theme("colors.accent"), 0 0 20px theme("colors.accent")',
       }
     },
   },
