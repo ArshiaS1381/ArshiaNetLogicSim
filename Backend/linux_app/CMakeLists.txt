@@ -1,67 +1,69 @@
 # ==============================================================================
 # File: CMakeLists.txt
-# Version: 1.1.0
+# Version: 2.0.0
 # Description:
 #   Build configuration for the Digital Logic Simulation Engine.
+#   Note: Simplified and refactored
 # ==============================================================================
 
 cmake_minimum_required(VERSION 3.10)
 
 # 1. Environment Setup
-# --------------------
-# Define the project name and language (C).
 project(LogicSim C)
-
-# Enforce the C99 standard.
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Add compiler warnings.
-# if(CMAKE_COMPILER_IS_GNUCC)
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
-# endif()
+# Add compiler warnings for clean code
+if(CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+endif()
 
-# Add a build option for the BeagleY-AI target.
+# Build option
 option(BUILD_FOR_BEAGLEY "Enable BeagleY-AI specific hardware features" OFF)
 
 # 2. Source Code Discovery
 # ------------------------
-# Auto-discover all general source files.
+# Finds ALL .c files in src/ and subdirectories (app, hal, logic, net, utils)
 file(GLOB_RECURSE SOURCES "src/*.c")
 
-# Create the executable target.
-add_executable(logic_sim "")
+add_executable(logic_sim ${SOURCES})
 
 # 3. Header Include Paths
 # -----------------------
-# Use target_include_directories for better encapsulation.
-target_include_directories(logic_sim PUBLIC 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/hal"
+# We must include all subdirectories so the compiler finds headers like "app_state.h"
+target_include_directories(logic_sim PRIVATE 
+    include
+    include/hal
+    src/app
+    src/hal
+    src/logic
+    src/net
+    src/utils
 )
 
-# 4. Conditional Compilation and Linking
-# -----------------------------------------
-
-# Always discover and add HAL sources (needed for linking the stub functions).
-file(GLOB_RECURSE HAL_SOURCES "src/hal/*.c")
-target_sources(logic_sim PRIVATE ${HAL_SOURCES})
-
+# 4. Conditional Linking
+# ----------------------
 if(BUILD_FOR_BEAGLEY)
-    message(STATUS "BeagleY-AI build enabled. Enabling BEAGLEY_BUILD macro.")
-    # Add a preprocessor definition for conditional compilation in C code.
+    message(STATUS "Cross-Compiling for BeagleY-AI Hardware (ARM64)")
+    
     target_compile_definitions(logic_sim PRIVATE BEAGLEY_BUILD)
+
+    # --- LINKING METHOD: APT MULTIARCH ---
+    # Looks for the libgpiod v2 you installed via 'apt install libgpiod-dev:arm64'
+    find_library(GPIOD_LIB gpiod 
+        PATHS /usr/lib/aarch64-linux-gnu
+        NO_DEFAULT_PATH
+    )
+
+    if(NOT GPIOD_LIB)
+        message(FATAL_ERROR "Could not find arm64 libgpiod! Did you run 'sudo apt install libgpiod-dev:arm64'?")
+    endif()
+
+    message(STATUS "Found ARM64 libgpiod: ${GPIOD_LIB}")
+
+    # Link against the found library
+    target_link_libraries(logic_sim PRIVATE ${GPIOD_LIB} pthread m)
 else()
-    message(STATUS "BeagleY-AI build disabled. Using HAL simulation stubs.")
+    message(STATUS "Building for Simulation (Stubs)")
+    target_link_libraries(logic_sim PRIVATE pthread m)
 endif()
-
-# Add all other sources. (This SOURCES list no longer needs to be filtered)
-target_sources(logic_sim PRIVATE ${SOURCES})
-
-# 5. Library Linking (unchanged)
-# ------------------
-# Link against pthread.
-target_link_libraries(logic_sim pthread)
-
-# Optional: Print status message
-# message(STATUS "Configured LogicSim build with sources: ${SOURCES}")

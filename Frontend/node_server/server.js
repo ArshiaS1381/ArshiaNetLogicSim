@@ -25,10 +25,10 @@ const io = new Server(server);
 const dgram = require('dgram');
 
 // --- CONFIGURATION CONSTANTS ---
-const WEB_PORT = 8088;         // Port for the browser to access (http://localhost:8088)
-const TARGET_IP = '127.0.0.1'; // Target IP of the C App. Use '127.0.0.1' for WSL/Linux, '192.168.7.2' for BeagleY-AI
-const TARGET_PORT = 12345;     // UDP Port the C Application is listening on
-const LISTEN_PORT = 12346;     // UDP Port Node.js listens on for responses from C
+const WEB_PORT = 8088;                                  // Port for the browser to access (http://localhost:8088)
+const TARGET_IP = process.env.TARGET_IP || '127.0.0.1'; // Allow environment variable to override, or default to localhost
+const TARGET_PORT = 12345;                              // UDP Port the C Application is listening on
+const LISTEN_PORT = 12346;                              // UDP Port Node.js listens on for responses from C
 
 // --- UDP SOCKET SETUP (Backend-to-Backend Communication) ---
 // We use UDP for its low overhead, matching the embedded nature of the C app.

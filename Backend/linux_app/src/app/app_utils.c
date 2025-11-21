@@ -119,8 +119,10 @@ void Send_Combined_Update(const char* in_x, const char* in_y, const char* in_z, 
     NetUDP_SendRaw(packet);
 
     // Clean up temporary trees
-    if(rX) AST_Free(rX); if(rY) AST_Free(rY);
-    if(rZ) AST_Free(rZ); if(rW) AST_Free(rW);
+    if(rX) AST_Free(rX);
+    if(rY) AST_Free(rY);
+    if(rZ) AST_Free(rZ);
+    if(rW) AST_Free(rW);
 }
 
 /*
