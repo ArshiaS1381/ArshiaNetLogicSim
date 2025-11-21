@@ -1,6 +1,6 @@
 /*
  * File: net_json.c
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Lightweight JSON serialization helper.
  * Provides simple string formatting functions to construct valid JSON objects
@@ -23,6 +23,7 @@ void JSON_SerializeState(const SharedState* state, char* buffer, int len) {
     snprintf(buffer, len,
         "{"
         "\"mode\": %d,"
+        "\"inputs\": %d," 
         "\"input_x\": \"%s\","
         "\"input_y\": \"%s\","
         "\"input_z\": \"%s\","
@@ -33,6 +34,7 @@ void JSON_SerializeState(const SharedState* state, char* buffer, int len) {
         "\"valid_w\": %s"
         "}",
         state->mode,
+        state->input_signal_state,
         state->input_x,
         state->input_y,
         state->input_z,

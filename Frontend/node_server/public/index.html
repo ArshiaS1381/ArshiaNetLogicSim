@@ -61,6 +61,40 @@
         </div>
     </div>
 
+    <div class="panel" style="border-left: 5px solid var(--accent);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>⚡ Live Hardware I/O</h3>
+            <span id="io-mode-indicator" style="font-size:12px; color:#aaa;">MODE: UNKNOWN</span>
+        </div>
+        
+        <div style="display:flex; gap:20px; flex-wrap:wrap; align-items: center;">
+            
+            <div style="background:#222; padding:10px; border-radius:5px;">
+                <div style="font-size:10px; color:#888; margin-bottom:5px;">INPUTS (Click to Toggle)</div>
+                <div style="display:flex; gap:5px;">
+                    <button class="io-btn" id="btn-io-a" onclick="toggleInput(0)">A</button>
+                    <button class="io-btn" id="btn-io-b" onclick="toggleInput(1)">B</button>
+                    <button class="io-btn" id="btn-io-c" onclick="toggleInput(2)">C</button>
+                    <button class="io-btn" id="btn-io-d" onclick="toggleInput(3)">D</button>
+                    <button class="io-btn" id="btn-io-e" onclick="toggleInput(4)">E</button>
+                    <button class="io-btn" id="btn-io-f" onclick="toggleInput(5)">F</button>
+                </div>
+            </div>
+
+            <div style="font-size:20px; color:#555;">➔</div>
+
+            <div style="background:#222; padding:10px; border-radius:5px;">
+                <div style="font-size:10px; color:#888; margin-bottom:5px;">LOGIC OUTPUTS</div>
+                <div style="display:flex; gap:5px;">
+                    <div class="io-led" id="led-io-x">X</div>
+                    <div class="io-led" id="led-io-y">Y</div>
+                    <div class="io-led" id="led-io-z">Z</div>
+                    <div class="io-led" id="led-io-w">W</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 
         SECTION 3: Preview Panel 
     -->

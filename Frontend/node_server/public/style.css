@@ -241,3 +241,123 @@ body.light-mode .circuit-card { background-color: #f8f9fa; border-color: #ddd; }
     box-shadow: 0 15px 30px rgba(0,0,0,0.7);
 }
 .modal-box input { background-color: #111; color: white; border: 1px solid #555; margin: 20px 0; text-align: center; }
+
+/* =========================================
+   ⚡ LIVE HARDWARE I/O DASHBOARD
+   ========================================= */
+
+/* --- 1. Base Button Style (The Dark Look) --- */
+.io-btn {
+    width: 35px;
+    height: 35px;
+    background-color: #2a2a2a; /* Dark Grey Background */
+    border: 1px solid #444;
+    color: #aaa;               /* Light Grey Text */
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    font-family: monospace;
+    transition: all 0.1s ease;
+}
+
+.io-btn:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #666;
+}
+
+.io-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background-color: #111;
+}
+
+/* --- 2. Active States (Rainbow Colors) --- */
+/* When clicked, the background changes to specific colors */
+
+#btn-io-a.active { 
+    background-color: #ff4757; 
+    border-color: #ff6b81; 
+    color: white;
+    box-shadow: 0 0 10px #ff4757; 
+} 
+
+#btn-io-b.active { 
+    background-color: #ffa502; 
+    border-color: #ffc048; 
+    color: white;
+    box-shadow: 0 0 10px #ffa502; 
+} 
+
+#btn-io-c.active { 
+    background-color: #2ed573; 
+    border-color: #7bed9f; 
+    color: white;
+    box-shadow: 0 0 10px #2ed573; 
+} 
+
+#btn-io-d.active { 
+    background-color: #1e90ff; 
+    border-color: #70a1ff; 
+    color: white;
+    box-shadow: 0 0 10px #1e90ff; 
+} 
+
+#btn-io-e.active { 
+    background-color: #3742fa; 
+    border-color: #5352ed; 
+    color: white;
+    box-shadow: 0 0 10px #3742fa; 
+} 
+
+#btn-io-f.active { 
+    background-color: #8e44ad; 
+    border-color: #9b59b6; 
+    color: white;
+    box-shadow: 0 0 10px #8e44ad; 
+}
+
+/* --- 3. Output LEDs (Base Style) --- */
+.io-led {
+    width: 35px;
+    height: 35px;
+    background-color: #111;
+    border: 2px solid #333;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+/* --- 4. Output LEDs (Active Colors) --- */
+#led-io-x.on { 
+    background-color: var(--color-x); 
+    border-color: #fff; 
+    color: #fff; 
+    box-shadow: 0 0 15px var(--color-x); 
+}
+
+#led-io-y.on { 
+    background-color: var(--color-y); 
+    border-color: #fff; 
+    color: #fff; 
+    box-shadow: 0 0 15px var(--color-y); 
+}
+
+#led-io-z.on { 
+    background-color: var(--color-z); 
+    border-color: #fff; 
+    color: #fff; 
+    box-shadow: 0 0 15px var(--color-z); 
+}
+
+#led-io-w.on { 
+    background-color: var(--color-w); 
+    border-color: #fff; 
+    color: #fff; 
+    box-shadow: 0 0 15px var(--color-w); 
+}
