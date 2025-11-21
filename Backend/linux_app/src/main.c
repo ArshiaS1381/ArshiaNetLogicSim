@@ -44,6 +44,13 @@ int main() {
     // 2. Main Execution Loop
     // Runs indefinitely, polling for state changes and executing logic updates.
     while (1) {
+        
+        // Check for exit request from the network thread
+        if (NetUDP_ExitRequested()) {
+            printf("[Main] Exit requested. Breaking main loop...\n");
+            break; // Exit the while loop
+        }
+        
         // Check if the application state needs processing
         if (AppState_IsDirty()) {
             SharedState st = AppState_GetSnapshot();
@@ -81,5 +88,6 @@ int main() {
     NetUDP_Cleanup();
     AppState_Cleanup();
     HAL_General_Cleanup();
+    printf(C_B_GREEN "✔ System Cleanup Starting." C_RESET "\n");
     return 0;
 }

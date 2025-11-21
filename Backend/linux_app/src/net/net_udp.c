@@ -39,6 +39,7 @@ static pthread_t udp_thread;
 static int sockfd;
 static struct sockaddr_in node_addr;
 static volatile int running = 1;
+static volatile int exit_requested = 0;
 static char current_uid[64] = ""; // Tracks the session ID of the current request
 
 // --- Security Globals ---
@@ -204,6 +205,17 @@ static void process_command(char* raw_msg) {
         AppState_Touch();
         printf("[UDP] Force Refresh Requested\n");
     }
+    else if (strcmp(cmd, "exit") == 0) {
+        printf("[UDP] Exit command received. Shutting down...\n");
+        exit_requested = 1; // Set the flag
+        running = 0;        // Stop the UDP thread's loop
+        
+        // Use a utility to briefly unblock the main loop's usleep (optional, but good)
+        AppState_Touch(); 
+
+        send_packet("{ \"status\": \"Exit signal received. Shutting down.\" }");
+    }
+
     // --- Help Command ---
     else if (strcmp(cmd, "help") == 0) {
         const char* help_json = 
@@ -316,4 +328,8 @@ void NetUDP_SendNetlist(const char* target, const char* json_data) {
 
 void NetUDP_SendRaw(const char* json_data) {
     send_packet(json_data);
+}
+
+int NetUDP_ExitRequested(void) {
+    return exit_requested;
 }

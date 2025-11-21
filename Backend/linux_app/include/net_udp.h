@@ -72,4 +72,6 @@ void NetUDP_SendNetlist(const char* target, const char* json_data);
  */
 void NetUDP_SendRaw(const char* json_data);
 
+int NetUDP_ExitRequested(void);
+
 #endif

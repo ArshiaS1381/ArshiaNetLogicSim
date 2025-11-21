@@ -1,5 +1,6 @@
 # C/C++ build artifacts (likely the cause of the 10K files)
 /CMakeFiles/
+Backend/build/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
@@ -7,6 +8,7 @@ Makefile
 *.a
 *.exe
 *.dll
+*.secret
 
 # Node dependencies (specific path required)
 Frontend/node_server/node_modules/
