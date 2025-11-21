@@ -1,32 +1,37 @@
 /*
  * File: app_editor.h
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Manages the on-screen line editor for entering logic equations.
- * This module abstracts the manipulation of the text buffer, handling
- * cursor movement, character insertion, and deletion.
- *
- * It separates the UI mechanics of typing from the logic of compiling.
+ * This module abstracts the manipulation of the text buffer and implements
+ * the state machine for the Rotary/Joystick menu system.
  */
 
 #ifndef APP_EDITOR_H
 #define APP_EDITOR_H
 
 #include <stdbool.h>
+#include "hal_rotary.h"   // For RotaryButtonState
+#include "hal_joystick.h" // For JoystickDirection
+
+// Return codes for the main loop to act upon
+typedef enum {
+    EDITOR_RESULT_NONE,
+    EDITOR_RESULT_MODIFIED, // Content changed (Flash Red LED)
+    EDITOR_RESULT_SAVE      // User selected "SET" (Save to AppState)
+} EditorResult;
 
 /*
  * Function: Editor_Init
  * ---------------------
- * Initializes the editor buffers and resets the cursor position.
+ * Initializes the editor buffers and resets cursor/menu state.
  */
 void Editor_Init(void);
 
 /*
  * Function: Editor_LoadLine
  * -------------------------
- * Loads an existing string into the editor buffer for modification.
- *
- * current_text: The string to load (e.g., the current equation for X).
+ * Loads an existing string into the editor buffer.
  */
 void Editor_LoadLine(const char* current_text);
 
@@ -34,34 +39,45 @@ void Editor_LoadLine(const char* current_text);
  * Function: Editor_GetLine
  * ------------------------
  * Retrieves the current content of the editor buffer.
- *
- * returns: A pointer to the internal null-terminated buffer.
  */
 const char* Editor_GetLine(void);
 
 /*
- * Function: Editor_InsertChar
- * ---------------------------
- * Inserts a single character at the current cursor position.
- * Ignores input if the buffer is full.
- *
- * c: The character to insert.
+ * Function: Editor_GetMenuLabel
+ * -----------------------------
+ * Returns the text to display for the current rotary menu selection.
+ * e.g., "A", "B", "OP: AND", "DEL", "SET"
  */
+const char* Editor_GetMenuLabel(void);
+
+/*
+ * Function: Editor_IsSyntaxValid
+ * ------------------------------
+ * Returns true if the current buffer forms a valid logic equation.
+ * Used to drive the Green LED.
+ */
+bool Editor_IsSyntaxValid(void);
+
+/*
+ * Function: Editor_UpdateState
+ * ----------------------------
+ * Called periodically by the main loop to update the menu selection.
+ * * rotary_delta: Steps moved by the encoder (e.g., +1, -1).
+ * joy_dir:      Current direction of the joystick (for sub-menus like OP).
+ */
+void Editor_UpdateState(int rotary_delta, JoystickDir joy_dir);
+
+/*
+ * Function: Editor_HandleButton
+ * -----------------------------
+ * Called when the Rotary button is pressed. Executes the selected action.
+ * * btn_state: Single Click (Insert) or Double Click (Negate/Insert NOT).
+ */
+EditorResult Editor_HandleButton(RotaryButtonState btn_state);
+
+// --- Legacy/Helper Functions (kept for internal use or UDP overrides) ---
 void Editor_InsertChar(char c);
-
-/*
- * Function: Editor_Backspace
- * --------------------------
- * Removes the character immediately preceding the cursor.
- * Handles bounds checking to prevent underflow.
- */
 void Editor_Backspace(void);
-
-/*
- * Function: Editor_Clear
- * ----------------------
- * Empties the editor buffer completely.
- */
 void Editor_Clear(void);
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * File: app_state.h
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Defines the shared application state structure and thread synchronization mechanisms.
  * This module acts as the central data repository for the application, holding
@@ -15,6 +15,7 @@
 #define APP_STATE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <pthread.h>
 
 /*
@@ -26,6 +27,8 @@
  * for a specific output channel.
  * MODE_RUN:             The system is actively simulating the logic equations.
  * MODE_TESTING:         The system is running automated verification scripts.
+ * MODE_ROTARY_EXEC:     Manual execution where the Rotary Encoder toggles inputs A-F.
+ * MODE_GPIO_EXEC:       Hardware execution where physical GPIO pins drive inputs A-F.
  */
 typedef enum {
     MODE_PROGRAM_X = 0,
@@ -33,7 +36,9 @@ typedef enum {
     MODE_PROGRAM_Z,
     MODE_PROGRAM_W,
     MODE_RUN,
-    MODE_TESTING
+    MODE_TESTING,
+    MODE_ROTARY_EXEC,
+    MODE_GPIO_EXEC
 } SystemMode;
 
 /*
@@ -45,6 +50,9 @@ typedef enum {
  * is_dirty: A generic flag used to signal that the state has been modified
  * and views (like the UI or Network) should refresh.
  *
+ * input_signal_state: A bitmask representing the live state of inputs A-F.
+ * Bit 0 = A, Bit 1 = B, ... Bit 5 = F.
+ *
  * input_x/y/z/w: String buffers holding the user's boolean expressions
  * (e.g., "A * B") for each output channel.
  *
@@ -54,6 +62,8 @@ typedef enum {
 typedef struct {
     SystemMode mode;
     bool is_dirty;
+    
+    uint8_t input_signal_state; 
 
     char input_x[256];
     char input_y[256];
@@ -90,6 +100,28 @@ void AppState_Cleanup(void);
  * for an extended period.
  */
 SharedState AppState_GetSnapshot(void);
+
+/*
+ * Function: AppState_SetMode
+ * --------------------------
+ * Safely transitions the system to a new operating mode.
+ */
+void AppState_SetMode(SystemMode new_mode);
+
+/*
+ * Function: AppState_SetInputMask
+ * -------------------------------
+ * Updates the global input state (A-F).
+ * * mask: Bitmask where Bit 0 is A, Bit 5 is F.
+ */
+void AppState_SetInputMask(uint8_t mask);
+
+/*
+ * Function: AppState_GetInputMask
+ * -------------------------------
+ * Returns the current thread-safe value of the input mask.
+ */
+uint8_t AppState_GetInputMask(void);
 
 /*
  * Function: AppState_SetInputX (and Y, Z, W)

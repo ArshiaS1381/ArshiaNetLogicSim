@@ -1,13 +1,8 @@
 /*
  * File: hal_general.c
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
- * Master initialization module for the Hardware Abstraction Layer.
- * Calls individual init routines for subsystems (GPIO, LED, R5F, etc.).
- *
- * Note: In this version (1.0.0), this acts as a simulation stub wrapper.
- * Calls to hardware-specific drivers will print status messages to console
- * rather than accessing physical registers.
+ * Master initialization module. Brings up GPIO, Joystick, LED, and Rotary subsystems.
  */
 
 #include "hal_general.h"
@@ -25,33 +20,25 @@
  */
 void HAL_General_Init(void) {
     #ifdef BEAGLEY_BUILD
-        printf("[HAL] Hardware Initialization\n");
+        printf("[HAL] Hardware Initialization (Real)\n");
     #else
         printf("[HAL] Hardware Initialization (Sim)\n");
     #endif
     
     Timer_Init();
-    HAL_GPIO_Init();
-    HAL_Joystick_Init();
-    HAL_LED_Init();
-    HAL_Rotary_Init();
+    HAL_GPIO_Init();     // Setup libgpiod lines
+    HAL_Joystick_Init(); // Setup SPI
+    HAL_LED_Init();      // Setup Sysfs
+    HAL_Rotary_Init();   // Start Decoder Thread
     
-    #ifdef BEAGLEY_BUILD
-        printf("[HAL] Hardware Initialization Complete\n");
-    #else
-        printf("[HAL] Hardware Initialization Complete (Sim)\n");
-    #endif
+    printf("[HAL] Init Complete.\n");
 }
 
-/*
- * Function: HAL_General_Cleanup
- * -----------------------------
- * Shuts down hardware subsystems.
- */
 void HAL_General_Cleanup(void) {
     printf("[HAL] Shutting down hardware...\n");
+    HAL_Rotary_Cleanup();
     HAL_GPIO_Cleanup();
-    // Add other cleanup calls if necessary
+    // Joystick/LED don't strictly require cleanup (OS handles fds)
 }
 
 /*
@@ -60,6 +47,6 @@ void HAL_General_Cleanup(void) {
  * Returns a simulated board temperature.
  */
 float HAL_General_GetBoardTemp(void) {
-    // Simulation stub: Return a fixed "safe" temperature
-    return 45.5f;
+    // Stub
+    return 40.0f;
 }

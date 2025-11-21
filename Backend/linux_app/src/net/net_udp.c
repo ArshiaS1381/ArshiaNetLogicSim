@@ -1,15 +1,10 @@
 /*
  * File: net_udp.c
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Implements the UDP server thread for external communication.
- * Listens on Port 12345 for ASCII commands (e.g., "program x A+B") and
- * sends JSON responses back to the Node.js middleware.
- *
- * Key Features:
- * - Runs in a separate pthread to avoid blocking the main logic loop.
- * - Implements a basic command parser and security (hash-based login).
- * - Handles broadcasting of logic analysis results (SOP, POS, Netlists).
+ * Listens on Port 12345 for ASCII commands and handles the specific
+ * logic for "Input Protection" when in GPIO mode.
  */
 
 #include "net_udp.h"
@@ -40,7 +35,7 @@ static int sockfd;
 static struct sockaddr_in node_addr;
 static volatile int running = 1;
 static volatile int exit_requested = 0;
-static char current_uid[64] = ""; // Tracks the session ID of the current request
+static char current_uid[64] = ""; 
 
 // --- Security Globals ---
 static unsigned long ADMIN_HASH = 0; 
@@ -56,7 +51,7 @@ static unsigned long hash_string(const char *str) {
     unsigned long hash = 5381;
     int c;
     while ((c = *str++)) {
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        hash = ((hash << 5) + hash) + c; 
     }
     return hash & 0xFFFFFFFF; 
 }
@@ -77,8 +72,7 @@ static void load_admin_secret() {
         }
         fclose(f);
     } else {
-        // Default: Hash of "1234"
-        ADMIN_HASH = 2088290703; 
+        ADMIN_HASH = 2088290703; // Default "1234"
         printf(C_B_RED "[Security] Warning: 'admin.secret' not found. Defaulting." C_RESET "\n");
     }
 }
@@ -145,13 +139,28 @@ static void process_command(char* raw_msg) {
             printf("      " C_B_GREEN "✔ AUTH SUCCESS" C_RESET "\n");
         } else {
             send_packet("{ \"type\": \"auth\", \"status\": \"fail\" }");
-            printf("      " C_B_RED "✘ AUTH FAILED" C_RESET " (Hash: %lu)\n", attempt_hash);
+            printf("      " C_B_RED "✘ AUTH FAILED" C_RESET "\n");
         }
         return;
     }
 
+    // --- INPUT CONTROL (New for Requirement #10) ---
+    else if (strncmp(cmd, "set_input ", 10) == 0) {
+        SharedState st = AppState_GetSnapshot();
+        
+        // PROTECTION: If in GPIO Mode, hardware pins rule. Web cannot override.
+        if (st.mode == MODE_GPIO_EXEC) {
+             send_packet("{ \"log\": \"Error: System is in GPIO Mode. Inputs are locked to hardware pins.\" }");
+             printf("      " C_B_RED "✘ DENIED:" C_RESET " GPIO Mode Active\n");
+        } else {
+             int mask = atoi(cmd + 10);
+             AppState_SetInputMask((uint8_t)mask);
+             send_packet("{ \"status\": \"Inputs Updated\" }");
+        }
+    }
+
     // --- Stateless Preview ---
-    if (strncmp(cmd, "preview ", 8) == 0) {
+    else if (strncmp(cmd, "preview ", 8) == 0) {
         char* ptr = cmd + 8;
         char target[2] = { ptr[0], '\0' }; 
         Process_Stateless(target, ptr + 2);
@@ -187,8 +196,7 @@ static void process_command(char* raw_msg) {
     else if (strncmp(cmd, "kmap ", 5) == 0) {
         char* ptr = cmd + 5;
         char target[2] = { ptr[0], '\0' };
-        char* csv = ptr + 2;
-        Program_From_Minterms(target, csv);
+        Program_From_Minterms(target, ptr + 2);
         send_packet("{ \"status\": \"Processing K-Map Input\" }");
     }
     // --- Utilities ---
@@ -206,28 +214,20 @@ static void process_command(char* raw_msg) {
         printf("[UDP] Force Refresh Requested\n");
     }
     else if (strcmp(cmd, "exit") == 0) {
-        printf("[UDP] Exit command received. Shutting down...\n");
-        exit_requested = 1; // Set the flag
-        running = 0;        // Stop the UDP thread's loop
-        
-        // Use a utility to briefly unblock the main loop's usleep (optional, but good)
+        exit_requested = 1; 
+        running = 0;        
         AppState_Touch(); 
-
-        send_packet("{ \"status\": \"Exit signal received. Shutting down.\" }");
+        send_packet("{ \"status\": \"Shutting down.\" }");
     }
 
     // --- Help Command ---
     else if (strcmp(cmd, "help") == 0) {
         const char* help_json = 
             "{ \"type\": \"help\", \"commands\": ["
-            "\"login <pass> - Authenticate for admin access.\","
-            "\"program <target> <eq> - Set a persistent logic equation for a target (x, y, z, w).\","
-            "\"preview <target> <eq> - Test an equation without saving.\","
-            "\"kmap <target> <csv> - Program a target using a comma-separated list of minterms.\","
-            "\"print <target> - Print the current equation for a target.\","
-            "\"clear - Clear all programmed equations.\","
-            "\"refresh - Force a broadcast of the current state.\","
-            "\"help - Display this help message.\""
+            "\"set_input <mask> - Set inputs A-F (0-63). Locked in GPIO Mode.\","
+            "\"program <target> <eq> - Set equation for x/y/z/w.\","
+            "\"preview <target> <eq> - Test equation.\","
+            "\"kmap <target> <csv> - Program via minterms.\""
             "] }";
         send_packet(help_json);
     }
@@ -299,7 +299,7 @@ void NetUDP_BroadcastState(void) {
     char json_buf[1024];
     SharedState st = AppState_GetSnapshot();
     JSON_SerializeState(&st, json_buf, sizeof(json_buf));
-    current_uid[0] = '\0'; // Broadcasts have no specific UID
+    current_uid[0] = '\0'; 
     send_packet(json_buf);
 }
 

@@ -13,12 +13,27 @@
 
 #include <stdbool.h>
 
+// Enum for button events (Needed by app_editor)
+typedef enum {
+    ROT_BTN_NONE,
+    ROT_BTN_CLICK,       // Single short press
+    ROT_BTN_DOUBLE_CLICK // Two presses within 300ms
+} RotaryButtonState;
+
 /*
  * Function: HAL_Rotary_Init
  * -------------------------
  * Configures the interrupt pins or polling timer for the encoder.
  */
 void HAL_Rotary_Init(void);
+
+/*
+ * Function: HAL_Rotary_Cleanup
+ * -------------------------
+ * Releases any resources associated with the rotary encoder.
+ */
+void HAL_Rotary_Cleanup(void);
+
 
 /*
  * Function: HAL_Rotary_GetCount
@@ -30,12 +45,12 @@ void HAL_Rotary_Init(void);
 int HAL_Rotary_GetCount(void);
 
 /*
- * Function: HAL_Rotary_GetButton
+ * Function: HAL_Rotary_GetButtonEvent
  * ------------------------------
  * Reads the state of the push-button built into the rotary encoder.
  *
  * returns: true if the button is pressed.
  */
-bool HAL_Rotary_GetButton(void);
+RotaryButtonState HAL_Rotary_GetButtonEvent(void);
 
 #endif

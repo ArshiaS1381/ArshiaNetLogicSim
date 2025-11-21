@@ -1,6 +1,6 @@
 /*
  * File: app_state.c
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Implements the central data store for the application.
  * This module manages the 'SharedState' structure, which acts as the
@@ -34,6 +34,7 @@ void AppState_Init(void) {
     
     memset(&global_state, 0, sizeof(SharedState));
     global_state.mode = MODE_PROGRAM_X; // Default to programming X
+    global_state.input_signal_state = 0; // Start with all inputs Low
     global_state.is_dirty = true;       // Force initial refresh
     
     // Initialize buffers to empty strings to prevent garbage reads
@@ -188,4 +189,31 @@ void AppState_Touch(void) {
     pthread_mutex_lock(&state_mutex);
     global_state.is_dirty = true;
     pthread_mutex_unlock(&state_mutex);
+}
+
+/*
+ * Function: AppState_SetInputMask
+ * -------------------------------
+ * Updates the hardware input mask (A-F).
+ */
+void AppState_SetInputMask(uint8_t mask) {
+    pthread_mutex_lock(&state_mutex);
+    if (global_state.input_signal_state != mask) {
+        global_state.input_signal_state = mask;
+        global_state.is_dirty = true;
+    }
+    pthread_mutex_unlock(&state_mutex);
+}
+
+/*
+ * Function: AppState_GetInputMask
+ * -------------------------------
+ * Returns the current input mask.
+ */
+uint8_t AppState_GetInputMask(void) {
+    uint8_t mask;
+    pthread_mutex_lock(&state_mutex);
+    mask = global_state.input_signal_state;
+    pthread_mutex_unlock(&state_mutex);
+    return mask;
 }

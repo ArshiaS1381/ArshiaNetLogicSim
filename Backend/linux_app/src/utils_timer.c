@@ -1,6 +1,6 @@
 /*
  * File: utils_timer.c
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
  * Implements high-resolution timekeeping functions for Linux.
  * Uses the POSIX `CLOCK_REALTIME` to provide millisecond-precision
@@ -11,6 +11,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 // Base timestamp for relative time calculations
 static long long start_time_ms = 0;
@@ -45,10 +46,19 @@ long long Timer_GetMillis(void) {
 }
 
 /*
- * Function: Timer_SleepMs
- * -----------------------
- * Wrapper for nanosleep to pause execution for a specific duration.
+ * Function: Timer_HasElapsed
+ * --------------------------
+ * Helper to check if a duration has passed since a specific start time.
+ * Useful for non-blocking delays (e.g., LED blinking).
+ *
+ * start_ts: The timestamp when the event started.
+ * duration_ms: How long to wait.
+ * returns: true if time is up.
  */
+bool Timer_HasElapsed(long long start_ts, int duration_ms) {
+    return (Timer_GetMillis() - start_ts) >= duration_ms;
+}
+
 void Timer_SleepMs(int ms) {
     struct timespec req;
     req.tv_sec = ms / 1000;
