@@ -27,6 +27,6 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^9.2.1"
   }
 }
