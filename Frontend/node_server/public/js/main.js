@@ -226,8 +226,30 @@ function setAdminMode(isUnlocked) {
 }
 
 function toggleTheme() {
-    document.body.classList.toggle('light-mode');
+    // Toggle Tailwind's 'dark' class on the root HTML element
+    const html = document.documentElement;
+    if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light'); // Save preference
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    }
 }
+
+// Add this to your DOMContentLoaded listener to load saved theme
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing bindings ...
+    
+// Load saved theme OR default to 'dark'
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        // Default is Dark
+        document.documentElement.classList.add('dark');
+    }
+});
 
 function closePreview() {
     const p = document.getElementById('preview-panel');

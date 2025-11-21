@@ -1,77 +1,73 @@
-<!-- 
-    File: index.html
-    Description: Main dashboard for the ArshiaNet Logic Tool.
--->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArshiaNet Logic Tool</title>
-    
     <link rel="icon" type="image/png" href="ArshiaNet.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="output.css">
     
-    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
-    
-    <!-- Socket.IO Client Library -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- Application Modules -->
-    <script src="js/kmap.js"></script>       <!-- Handles K-Map Grid Rendering -->
-    <script src="js/visualizer.js"></script> <!-- Handles Cytoscape Graph Rendering -->
+    <script src="js/kmap.js"></script>
+    <script src="js/visualizer.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="selection:bg-accent selection:text-white">
 
-<!-- 
-    SECTION 1: Admin Login Modal 
--->
-<div id="login-modal" class="modal-overlay">
+<div id="login-modal" class="hidden">
     <div class="modal-box">
-        <h3 style="color:white">Admin Login</h3>
-        <p style="color:#aaa; font-size:12px;">Enter password to unlock hardware.</p>
-        <input type="password" id="admin-pass" placeholder="Password">
-        <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
-            <button id="btn-login-cancel" style="background:#444; color:#ccc;">Cancel</button>
-            <button id="btn-login-submit" style="background:var(--accent);">Login</button>
+        <h3 class="justify-center border-none mb-2 !pb-0">Admin Access</h3>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Enter password to unlock hardware control.</p>
+        <input type="password" id="admin-pass" placeholder="Password" class="text-center mb-6">
+        <div class="flex gap-4 justify-center">
+            <button id="btn-login-cancel" class="px-6 py-3 text-slate-500 hover:text-black dark:hover:text-white font-bold transition-colors">Cancel</button>
+            <button id="btn-login-submit" class="px-8 py-3 bg-accent hover:bg-blue-600 text-white rounded-xl shadow-lg shadow-accent/30 transition-all hover:scale-105 font-bold">Unlock</button>
         </div>
-        <p id="login-error" style="color:#dc3545; display:none; margin-top:10px;">Incorrect Password</p>
+        <p id="login-error" class="text-red-500 text-sm mt-6 hidden">Incorrect Password</p>
     </div>
 </div>
 
 <div class="container">
-    <!-- 
-        SECTION 2: Header Status Bar 
-    -->
+    
     <div class="status-bar">
-        <div style="display:flex; align-items:center; gap:20px;">
-            <div id="status-indicator">Connecting...</div>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:12px; font-weight:bold; color:var(--text-muted);">ZOOM</span>
-                <input type="range" id="zoom-slider" min="0.2" max="2.0" step="0.1" value="1.0" style="width:100px; cursor:pointer;">
+        <div class="flex items-center gap-4">
+            <div id="status-indicator" class="animate-pulse text-sm font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Connecting...
             </div>
         </div>
 
-        <div style="display:flex; gap:10px; align-items:center;">
-            <button id="btn-theme" style="background:var(--bg-input); color:var(--text-main); border:1px solid var(--border);">🌗 Theme</button>
-            <div id="admin-lock" style="cursor:pointer; color:var(--text-muted); font-weight:bold; padding:5px;">🔒 Guest</div>
+        <div class="flex items-center gap-4">
+            <button id="btn-theme" class="px-5 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-all shadow-sm">
+                🌗 Theme
+            </button>
+            <div id="admin-lock" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-300 dark:border-white/10 cursor-pointer transition-colors hover:bg-slate-200 dark:hover:bg-white/10">
+                <span>🔒</span>
+                <span class="text-sm font-bold text-slate-500 dark:text-slate-400">Guest</span>
+            </div>
         </div>
     </div>
 
-    <div class="panel" style="border-left: 5px solid var(--accent);">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>⚡ Live Hardware I/O</h3>
-            <span id="io-mode-indicator" style="font-size:12px; color:#aaa;">MODE: UNKNOWN</span>
+    <div class="panel border-l-8 border-accent relative group">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h3 class="!mb-1 !border-none !pb-0 text-2xl">
+                    <span class="text-accent">⚡</span> Live Hardware I/O
+                </h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Real-time bridge to BeagleY-AI</p>
+            </div>
+            <span id="io-mode-indicator" class="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-white/5 px-4 py-2 rounded-lg border border-slate-300 dark:border-white/10 backdrop-blur-md">
+                MODE: SYNCING
+            </span>
         </div>
         
-        <div style="display:flex; gap:20px; flex-wrap:wrap; align-items: center;">
-            
-            <div style="background:#222; padding:10px; border-radius:5px;">
-                <div style="font-size:10px; color:#888; margin-bottom:5px;">INPUTS (Click to Toggle)</div>
-                <div style="display:flex; gap:5px;">
+        <div class="flex flex-col md:flex-row gap-12 items-center justify-center py-4">
+            <div class="bg-slate-50/50 dark:bg-white/5 p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 backdrop-blur-md shadow-sm">
+                <div class="text-[10px] font-bold text-slate-400 mb-6 tracking-[0.2em] uppercase text-center">Inputs (Toggle)</div>
+                <div class="flex gap-4 flex-wrap justify-center">
                     <button class="io-btn" id="btn-io-a" onclick="toggleInput(0)">A</button>
                     <button class="io-btn" id="btn-io-b" onclick="toggleInput(1)">B</button>
                     <button class="io-btn" id="btn-io-c" onclick="toggleInput(2)">C</button>
@@ -81,11 +77,11 @@
                 </div>
             </div>
 
-            <div style="font-size:20px; color:#555;">➔</div>
+            <div class="text-slate-300 text-3xl animate-pulse hidden md:block opacity-50">➔</div>
 
-            <div style="background:#222; padding:10px; border-radius:5px;">
-                <div style="font-size:10px; color:#888; margin-bottom:5px;">LOGIC OUTPUTS</div>
-                <div style="display:flex; gap:5px;">
+            <div class="bg-slate-50/50 dark:bg-white/5 p-8 rounded-[2rem] border border-slate-200 dark:border-white/5 backdrop-blur-md shadow-sm">
+                <div class="text-[10px] font-bold text-slate-400 mb-6 tracking-[0.2em] uppercase text-center">Outputs</div>
+                <div class="flex gap-6">
                     <div class="io-led" id="led-io-x">X</div>
                     <div class="io-led" id="led-io-y">Y</div>
                     <div class="io-led" id="led-io-z">Z</div>
@@ -95,168 +91,148 @@
         </div>
     </div>
 
-    <!-- 
-        SECTION 3: Preview Panel 
-    -->
-    <div id="preview-panel" class="panel" style="display:none; border-left:5px solid #fff;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 id="preview-title" style="margin:0; border:none;">Preview Result</h3>
-            <button id="btn-preview-close" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:12px;">✕ Close</button>
+    <div id="preview-panel" class="hidden panel mb-8 relative z-[800] animate-fade-in-up !p-0 overflow-hidden">
+        <div class="bg-slate-50/50 dark:bg-white/5 p-6 flex justify-between items-center border-b border-slate-200 dark:border-white/5">
+            <h3 id="preview-title" class="!mb-0 !border-none !pb-0 text-2xl">Preview Result</h3>
+            <button id="btn-preview-close" class="text-slate-400 hover:text-slate-800 dark:hover:text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">✕ Close</button>
         </div>
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-            <div style="flex:0 0 auto;">
-                <div id="preview-kmap-container" class="always-dark" style="overflow-x:auto; padding:10px; border-radius:4px;"></div>
+        <div class="p-8 flex flex-col md:flex-row gap-12">
+            <div class="flex-shrink-0">
+                <div id="preview-kmap-container" class="overflow-x-auto"></div>
             </div>
-            <div style="flex:1; min-width:250px; background:var(--bg-card); padding:15px; border-radius:6px; border:1px solid var(--border);">
-                <div class="stats-grid">
-                    <label>SOP:</label> <span id="preview-sop" class="code-text">-</span>
-                    <label>POS:</label> <span id="preview-pos" class="code-text">-</span>
-                    <label>Min:</label> <span id="preview-min" class="code-text" style="color:var(--text-muted)">-</span>
+            <div class="flex-grow space-y-6 font-mono text-sm text-slate-600 dark:text-slate-300">
+                <div class="border-b border-slate-200 dark:border-white/5 pb-4">
+                    <div class="text-slate-400 text-xs uppercase tracking-wider mb-2 font-bold">Sum of Products</div>
+                    <span id="preview-sop" class="font-bold text-lg text-channel-x break-all"></span>
+                </div>
+                <div class="border-b border-slate-200 dark:border-white/5 pb-4">
+                    <div class="text-slate-400 text-xs uppercase tracking-wider mb-2 font-bold">Product of Sums</div>
+                    <span id="preview-pos" class="text-base text-channel-y break-all"></span>
+                </div>
+                <div>
+                    <div class="text-slate-400 text-xs uppercase tracking-wider mb-2 font-bold">Minterms</div>
+                    <span id="preview-min" class="text-slate-500 leading-relaxed"></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 
-        SECTION 4: Input Section 
-    -->
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        
-        <!-- Input Method A: Equation String -->
-        <div class="panel" style="flex: 1; min-width: 300px;">
-            <div class="help-icon" data-tip="Enter a boolean equation. 'Pre' visualizes it privately. 'Set' (Admin) programs the hardware.">?</div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="panel">
+            <div class="help-icon" data-tip="Enter equation">?</div>
             <h3>Input A: Equation Editor</h3>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="space-y-6">
                 <input type="text" id="eqInput" placeholder="Enter equation (e.g. A + B*C)...">
-                <!-- Preview Buttons (Using data attributes for routing in JS) -->
-                <div style="display: flex; gap: 5px;">
-                    <button class="btn-eq-pre" data-target="x" style="flex:1; background:transparent; border:1px solid var(--color-x); color:var(--color-x)">Pre X</button>
-                    <button class="btn-eq-pre" data-target="y" style="flex:1; background:transparent; border:1px solid var(--color-y); color:var(--color-y)">Pre Y</button>
-                    <button class="btn-eq-pre" data-target="z" style="flex:1; background:transparent; border:1px solid var(--color-z); color:var(--color-z)">Pre Z</button>
-                    <button class="btn-eq-pre" data-target="w" style="flex:1; background:transparent; border:1px solid var(--color-w); color:var(--color-w)">Pre W</button>
+                <div class="flex gap-3">
+                    <button class="flex-1 py-3 rounded-xl border border-channel-x/30 text-channel-x hover:bg-channel-x/10 btn-eq-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="x">Pre X</button>
+                    <button class="flex-1 py-3 rounded-xl border border-channel-y/30 text-channel-y hover:bg-channel-y/10 btn-eq-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="y">Pre Y</button>
+                    <button class="flex-1 py-3 rounded-xl border border-channel-z/30 text-channel-z hover:bg-channel-z/10 btn-eq-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="z">Pre Z</button>
+                    <button class="flex-1 py-3 rounded-xl border border-channel-w/30 text-channel-w hover:bg-channel-w/10 btn-eq-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="w">Pre W</button>
                 </div>
-                <!-- Set Buttons (Admin Only) -->
-                <div class="admin-only" style="gap: 5px;">
-                    <button class="btn-eq-set" data-target="x" style="flex:1; background:var(--color-x)">Set X</button>
-                    <button class="btn-eq-set" data-target="y" style="flex:1; background:var(--color-y)">Set Y</button>
-                    <button class="btn-eq-set" data-target="z" style="flex:1; background:var(--color-z)">Set Z</button>
-                    <button class="btn-eq-set" data-target="w" style="flex:1; background:var(--color-w)">Set W</button>
+                <div class="admin-only gap-3 pt-4 border-t border-slate-200 dark:border-white/5 mt-4">
+                    <button class="flex-1 py-3 rounded-xl bg-channel-x text-white shadow-lg shadow-green-500/20 btn-eq-set hover:scale-[1.02] transition-transform" data-target="x">Set X</button>
+                    <button class="flex-1 py-3 rounded-xl bg-channel-y text-white shadow-lg shadow-blue-500/20 btn-eq-set hover:scale-[1.02] transition-transform" data-target="y">Set Y</button>
+                    <button class="flex-1 py-3 rounded-xl bg-channel-z text-white shadow-lg shadow-orange-500/20 btn-eq-set hover:scale-[1.02] transition-transform" data-target="z">Set Z</button>
+                    <button class="flex-1 py-3 rounded-xl bg-channel-w text-white shadow-lg shadow-red-500/20 btn-eq-set hover:scale-[1.02] transition-transform" data-target="w">Set W</button>
                 </div>
             </div>
         </div>
 
-        <!-- Input Method B: Interactive K-Map -->
-        <div class="panel" style="flex: 1; min-width: 300px; border-left: 4px solid #d63384;">
-            <div class="help-icon" data-tip="Click cells to toggle bits (0/1). Use 'Pre' to reverse-engineer logic from the map.">?</div>
-            <h3 style="color:#d63384;">Input B: K-Map Scratchpad</h3>
-            
-            <div id="kmap-scratchpad" class="always-dark" style="overflow-x:auto; margin-bottom:10px; padding:10px; border-radius:4px;"></div>
-            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                <button class="btn-kmap-pre" data-target="x" style="flex:1; background:transparent; border:1px solid var(--color-x); color:var(--color-x)">Pre X</button>
-                <button class="btn-kmap-pre" data-target="y" style="flex:1; background:transparent; border:1px solid var(--color-y); color:var(--color-y)">Pre Y</button>
-                <button class="btn-kmap-pre" data-target="z" style="flex:1; background:transparent; border:1px solid var(--color-z); color:var(--color-z)">Pre Z</button>
-                <button class="btn-kmap-pre" data-target="w" style="flex:1; background:transparent; border:1px solid var(--color-w); color:var(--color-w)">Pre W</button>
+        <div class="panel border-l-8 border-pink-500">
+            <div class="help-icon" data-tip="K-Map Input">?</div>
+            <h3 class="text-pink-500 !border-pink-500/20 !pb-0">Input B: K-Map Scratchpad</h3>
+            <div id="kmap-scratchpad" class="my-8 overflow-x-auto flex justify-center"></div>
+            <div class="flex gap-3 mb-3">
+                <button class="flex-1 py-3 rounded-xl border border-channel-x/30 text-channel-x hover:bg-channel-x/10 btn-kmap-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="x">Pre X</button>
+                <button class="flex-1 py-3 rounded-xl border border-channel-y/30 text-channel-y hover:bg-channel-y/10 btn-kmap-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="y">Pre Y</button>
+                <button class="flex-1 py-3 rounded-xl border border-channel-z/30 text-channel-z hover:bg-channel-z/10 btn-kmap-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="z">Pre Z</button>
+                <button class="flex-1 py-3 rounded-xl border border-channel-w/30 text-channel-w hover:bg-channel-w/10 btn-kmap-pre font-mono text-sm shadow-sm hover:shadow-md transition-all" data-target="w">Pre W</button>
             </div>
-            <div class="admin-only" style="gap: 5px; margin-bottom: 5px;">
-                <button class="btn-kmap-set" data-target="x" style="flex:1; background:var(--color-x)">Set X</button>
-                <button class="btn-kmap-set" data-target="y" style="flex:1; background:var(--color-y)">Set Y</button>
-                <button class="btn-kmap-set" data-target="z" style="flex:1; background:var(--color-z)">Set Z</button>
-                <button class="btn-kmap-set" data-target="w" style="flex:1; background:var(--color-w)">Set W</button>
+            <div class="admin-only gap-3 mb-4 pt-4 border-t border-slate-200 dark:border-white/5 mt-4">
+                <button class="flex-1 py-3 rounded-xl bg-channel-x text-white btn-kmap-set hover:scale-[1.02] transition-transform" data-target="x">Set X</button>
+                <button class="flex-1 py-3 rounded-xl bg-channel-y text-white btn-kmap-set hover:scale-[1.02] transition-transform" data-target="y">Set Y</button>
+                <button class="flex-1 py-3 rounded-xl bg-channel-z text-white btn-kmap-set hover:scale-[1.02] transition-transform" data-target="z">Set Z</button>
+                <button class="flex-1 py-3 rounded-xl bg-channel-w text-white btn-kmap-set hover:scale-[1.02] transition-transform" data-target="w">Set W</button>
             </div>
-            <button id="btn-clear-kmap" style="width:100%; background:#555;">Clear Grid</button>
+            <button id="btn-clear-kmap" class="w-full py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 tracking-wider uppercase transition-colors">Clear Grid</button>
         </div>
     </div>
 
-    <!-- 
-        SECTION 5: System State 
-    -->
     <div class="panel">
-        <div class="help-icon" data-tip="Shows the current logic running on the hardware. SOP = Sum of Products (Minterms). POS = Product of Sums (Maxterms).">?</div>
-        <h3>Current System State (Read Only)</h3>
-        <div class="grid-2x2">
-            <!-- Cards X, Y, Z, W -->
-            <div class="circuit-card" style="border-left-color: var(--color-x);">
-                <h4 style="color:var(--color-x)">Circuit X</h4>
-                <div id="kmap-container-X" class="always-dark" style="overflow-x: auto;"></div>
-                <div class="stats-grid">
-                    <label>SOP:</label> <span id="sop-x" class="code-text">-</span>
-                    <label>POS:</label> <span id="pos-x" class="code-text">-</span>
-                    <label>Min:</label> <span id="min-x" class="code-text">-</span>
+        <div class="help-icon" data-tip="Shows the current logic running on the hardware.">?</div>
+        <h3>Current System State</h3>
+        <div class="grid-system">
+            <div class="circuit-card">
+                <h4 class="text-channel-x text-xl mb-6">Circuit X</h4>
+                <div id="kmap-container-X" class="overflow-x-auto mb-6 flex justify-center"></div>
+                <div class="space-y-4 font-mono text-xs pt-4 border-t border-slate-200 dark:border-white/5">
+                    <div><div class="text-slate-400 mb-1">SOP</div> <span id="sop-x" class="text-slate-600 dark:text-slate-300 font-bold block break-all"></span></div>
+                    <div><div class="text-slate-400 mb-1">POS</div> <span id="pos-x" class="text-slate-600 dark:text-slate-300 block break-all"></span></div>
                 </div>
             </div>
-            <div class="circuit-card" style="border-left-color: var(--color-y);">
-                <h4 style="color:var(--color-y)">Circuit Y</h4>
-                <div id="kmap-container-Y" class="always-dark" style="overflow-x: auto;"></div>
-                <div class="stats-grid">
-                    <label>SOP:</label> <span id="sop-y" class="code-text">-</span>
-                    <label>POS:</label> <span id="pos-y" class="code-text">-</span>
-                    <label>Min:</label> <span id="min-y" class="code-text">-</span>
+            <div class="circuit-card">
+                <h4 class="text-channel-y text-xl mb-6">Circuit Y</h4>
+                <div id="kmap-container-Y" class="overflow-x-auto mb-6 flex justify-center"></div>
+                <div class="space-y-4 font-mono text-xs pt-4 border-t border-slate-200 dark:border-white/5">
+                    <div><div class="text-slate-400 mb-1">SOP</div> <span id="sop-y" class="text-slate-600 dark:text-slate-300 font-bold block break-all"></span></div>
+                    <div><div class="text-slate-400 mb-1">POS</div> <span id="pos-y" class="text-slate-600 dark:text-slate-300 block break-all"></span></div>
                 </div>
             </div>
-            <div class="circuit-card" style="border-left-color: var(--color-z);">
-                <h4 style="color:var(--color-z)">Circuit Z</h4>
-                <div id="kmap-container-Z" class="always-dark" style="overflow-x: auto;"></div>
-                <div class="stats-grid">
-                    <label>SOP:</label> <span id="sop-z" class="code-text">-</span>
-                    <label>POS:</label> <span id="pos-z" class="code-text">-</span>
-                    <label>Min:</label> <span id="min-z" class="code-text">-</span>
+            <div class="circuit-card">
+                <h4 class="text-channel-z text-xl mb-6">Circuit Z</h4>
+                <div id="kmap-container-Z" class="overflow-x-auto mb-6 flex justify-center"></div>
+                <div class="space-y-4 font-mono text-xs pt-4 border-t border-slate-200 dark:border-white/5">
+                    <div><div class="text-slate-400 mb-1">SOP</div> <span id="sop-z" class="text-slate-600 dark:text-slate-300 font-bold block break-all"></span></div>
+                    <div><div class="text-slate-400 mb-1">POS</div> <span id="pos-z" class="text-slate-600 dark:text-slate-300 block break-all"></span></div>
                 </div>
             </div>
-            <div class="circuit-card" style="border-left-color: var(--color-w);">
-                <h4 style="color:var(--color-w)">Circuit W</h4>
-                <div id="kmap-container-W" class="always-dark" style="overflow-x: auto;"></div>
-                <div class="stats-grid">
-                    <label>SOP:</label> <span id="sop-w" class="code-text">-</span>
-                    <label>POS:</label> <span id="pos-w" class="code-text">-</span>
-                    <label>Min:</label> <span id="min-w" class="code-text">-</span>
+            <div class="circuit-card">
+                <h4 class="text-channel-w text-xl mb-6">Circuit W</h4>
+                <div id="kmap-container-W" class="overflow-x-auto mb-6 flex justify-center"></div>
+                <div class="space-y-4 font-mono text-xs pt-4 border-t border-slate-200 dark:border-white/5">
+                    <div><div class="text-slate-400 mb-1">SOP</div> <span id="sop-w" class="text-slate-600 dark:text-slate-300 font-bold block break-all"></span></div>
+                    <div><div class="text-slate-400 mb-1">POS</div> <span id="pos-w" class="text-slate-600 dark:text-slate-300 block break-all"></span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 
-        SECTION 6: Visualizer 
-    -->
     <div class="panel">
-        <div class="help-icon" data-tip="Interactive wiring diagram. Use checkboxes to toggle circuit visibility. Use the slider above to zoom.">?</div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Combined Logic Diagram</h3>
-            <div style="background:var(--bg-input); padding:5px 10px; border-radius:4px;">
-                <label style="color:var(--color-x); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-x" checked> X</label>
-                <label style="color:var(--color-y); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-y" checked> Y</label>
-                <label style="color:var(--color-z); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-z" checked> Z</label>
-                <label style="color:var(--color-w)"><input type="checkbox" class="chk-viz" id="show-w" checked> W</label>
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="!mb-0 !border-none !pb-0">Combined Diagram</h3>
+            <div class="flex gap-4 bg-slate-100 dark:bg-black/20 px-5 py-2 rounded-xl border border-slate-200 dark:border-white/5 text-sm font-bold backdrop-blur-sm">
+                <label class="flex items-center gap-2 text-channel-x cursor-pointer hover:opacity-80 transition-opacity"><input type="checkbox" class="chk-viz accent-channel-x" id="show-x" checked> X</label>
+                <label class="flex items-center gap-2 text-channel-y cursor-pointer hover:opacity-80 transition-opacity"><input type="checkbox" class="chk-viz accent-channel-y" id="show-y" checked> Y</label>
+                <label class="flex items-center gap-2 text-channel-z cursor-pointer hover:opacity-80 transition-opacity"><input type="checkbox" class="chk-viz accent-channel-z" id="show-z" checked> Z</label>
+                <label class="flex items-center gap-2 text-channel-w cursor-pointer hover:opacity-80 transition-opacity"><input type="checkbox" class="chk-viz accent-channel-w" id="show-w" checked> W</label>
             </div>
         </div>
-        <div id="cy-XY" class="always-dark" style="height: 600px; border: 1px solid var(--border); margin-top:10px; border-radius:4px;"></div>
+        <div id="cy-XY" class="h-[600px] bg-slate-50/50 dark:bg-black/20 rounded-[1.5rem] border border-slate-200 dark:border-white/5 shadow-inner backdrop-blur-sm"></div>
     </div>
 
-    <!-- 
-        SECTION 7: Logs 
-    -->
     <div class="panel">
-        <div class="log-header" style="display:flex; justify-content:space-between;">
-            <h3>System Logs</h3>
-            <button id="dl-btn" style="display:none; background:var(--accent);">📥 CSV</button>
-            <div class="admin-only">
-                <input type="text" id="rawCmd" placeholder="Raw UDP..." style="width:150px; margin-right:5px;">
-                <button id="btn-send-raw" style="background:#555;">Send</button>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] !border-none !mb-0 !pb-0">System Logs</h3>
+            <div class="flex gap-2">
+                <button id="dl-btn" class="hidden px-4 py-2 bg-accent text-white text-xs rounded-lg font-bold shadow-lg hover:scale-105 transition-transform">📥 CSV</button>
+                <div class="admin-only gap-2">
+                    <input type="text" id="rawCmd" placeholder="Raw UDP..." class="!w-40 !py-2 !text-xs">
+                    <button id="btn-send-raw" class="px-4 py-2 bg-slate-700 text-white text-xs rounded-lg hover:bg-slate-600 font-bold">Send</button>
+                </div>
             </div>
         </div>
-        <div id="server-log" style="background:#000; height:150px; overflow-y:auto; border:1px solid var(--border); padding:10px; font-size:12px; color:#ccc;"></div>
+        <div id="server-log" class="h-48 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 p-4 text-xs font-mono text-slate-600 dark:text-slate-400 overflow-y-auto shadow-inner backdrop-blur-md"></div>
     </div>
+
 </div>
 
-<footer style="text-align: center; padding: 20px 0; margin-top: 20px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border);">
-    <p style="margin: 5px 0;">
-        &copy; 2025 Arshia Soleimany | ENSC 351 Final Project | 
-        <a href="https://github.com/ArshiaS1381" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">GitHub</a>
-    </p>
+<footer class="text-center py-10 text-slate-400 text-xs border-t border-slate-200 dark:border-white/5 mt-12 relative z-10">
+    <div class="flex items-center justify-center gap-4 mb-2">
+        <a href="https://github.com/ArshiaS1381" target="_blank" class="text-2xl hover:text-accent transition-colors"><i class="fab fa-github"></i></a>
+    </div>
+    <p>&copy; 2025 Arshia Soleimany | ENSC 351 Capstone</p>
 </footer>
 
-<!-- Main Logic Script -->
 <script src="js/main.js"></script>
-
 </body>
 </html>

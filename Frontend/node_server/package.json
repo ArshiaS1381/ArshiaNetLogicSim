@@ -1,27 +1,25 @@
 {
   "name": "node_server",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Web Interface for the Digital Logic Simulation Engine",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    
     "clean": "rm -rf ../../Backend/build/*",
-
+    
     "start": "npm run start:sim",
     
-    "start:sim": "npm run build:sim && concurrently --kill-others \"npm:start:node\" \"npm:start:c\"",
+    "start:sim": "npm run build:sim && npm run dev", 
+    
     "start:node": "node server.js",
-    "start:node-only": "node server.js",
     "start:c": "sleep 1 && cd ../../Backend && ./build/logic_sim",
 
     "build:sim": "npm run clean && echo \"[1/2] Configuring...\" && (cmake -S ../../Backend/linux_app -B ../../Backend/build -DBUILD_FOR_BEAGLEY=OFF > /dev/null 2>&1) && echo \"[2/2] Compiling...\" && (cmake --build ../../Backend/build -- -s > /dev/null 2>&1)",
     
-    "build:beagley": "npm run clean && echo \"[1/2] Configuring Cross-Compile...\" && (cmake -S ../../Backend/linux_app -B ../../Backend/build -DBUILD_FOR_BEAGLEY=ON -DCMAKE_TOOLCHAIN_FILE=$(pwd)/../../Backend/linux_app/aarch64-toolchain.cmake > /dev/null 2>&1) && echo \"[2/2] Compiling ARM64...\" && (cmake --build ../../Backend/build -- -s > /dev/null 2>&1)"
+    "build:beagley": "npm run clean && echo \"[1/2] Configuring Cross-Compile...\" && (cmake -S ../../Backend/linux_app -B ../../Backend/build -DBUILD_FOR_BEAGLEY=ON -DCMAKE_TOOLCHAIN_FILE=$(pwd)/../../Backend/linux_app/aarch64-toolchain.cmake > /dev/null 2>&1) && echo \"[2/2] Compiling ARM64...\" && (cmake --build ../../Backend/build -- -s > /dev/null 2>&1)",
+
+    "dev": "concurrently \"npx tailwindcss -i ./public/input.css -o ./public/output.css --watch\" \"npm:start:node\" \"npm:start:c\""
   },
-  "keywords": [
-    "logic", "simulation", "k-map", "beagley-ai"
-  ],
   "author": "Arshia Soleimany",
   "license": "ISC",
   "dependencies": {
@@ -29,6 +27,9 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.35",
+    "autoprefixer": "^10.4.17"
   }
 }
