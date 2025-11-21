@@ -1,0 +1,228 @@
+<!-- 
+    File: index.html
+    Description: Main dashboard for the ArshiaNet Logic Tool.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArshiaNet Logic Tool</title>
+    
+    <link rel="icon" type="image/png" href="ArshiaNet.png">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+    
+    <!-- Socket.IO Client Library -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Application Modules -->
+    <script src="js/kmap.js"></script>       <!-- Handles K-Map Grid Rendering -->
+    <script src="js/visualizer.js"></script> <!-- Handles Cytoscape Graph Rendering -->
+</head>
+<body>
+
+<!-- 
+    SECTION 1: Admin Login Modal 
+-->
+<div id="login-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="color:white">Admin Login</h3>
+        <p style="color:#aaa; font-size:12px;">Enter password to unlock hardware.</p>
+        <input type="password" id="admin-pass" placeholder="Password">
+        <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
+            <button id="btn-login-cancel" style="background:#444; color:#ccc;">Cancel</button>
+            <button id="btn-login-submit" style="background:var(--accent);">Login</button>
+        </div>
+        <p id="login-error" style="color:#dc3545; display:none; margin-top:10px;">Incorrect Password</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 
+        SECTION 2: Header Status Bar 
+    -->
+    <div class="status-bar">
+        <div style="display:flex; align-items:center; gap:20px;">
+            <div id="status-indicator">Connecting...</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-muted);">ZOOM</span>
+                <input type="range" id="zoom-slider" min="0.2" max="2.0" step="0.1" value="1.0" style="width:100px; cursor:pointer;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button id="btn-theme" style="background:var(--bg-input); color:var(--text-main); border:1px solid var(--border);">🌗 Theme</button>
+            <div id="admin-lock" style="cursor:pointer; color:var(--text-muted); font-weight:bold; padding:5px;">🔒 Guest</div>
+        </div>
+    </div>
+
+    <!-- 
+        SECTION 3: Preview Panel 
+    -->
+    <div id="preview-panel" class="panel" style="display:none; border-left:5px solid #fff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 id="preview-title" style="margin:0; border:none;">Preview Result</h3>
+            <button id="btn-preview-close" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:12px;">✕ Close</button>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div style="flex:0 0 auto;">
+                <div id="preview-kmap-container" class="always-dark" style="overflow-x:auto; padding:10px; border-radius:4px;"></div>
+            </div>
+            <div style="flex:1; min-width:250px; background:var(--bg-card); padding:15px; border-radius:6px; border:1px solid var(--border);">
+                <div class="stats-grid">
+                    <label>SOP:</label> <span id="preview-sop" class="code-text">-</span>
+                    <label>POS:</label> <span id="preview-pos" class="code-text">-</span>
+                    <label>Min:</label> <span id="preview-min" class="code-text" style="color:var(--text-muted)">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+        SECTION 4: Input Section 
+    -->
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        
+        <!-- Input Method A: Equation String -->
+        <div class="panel" style="flex: 1; min-width: 300px;">
+            <div class="help-icon" data-tip="Enter a boolean equation. 'Pre' visualizes it privately. 'Set' (Admin) programs the hardware.">?</div>
+            <h3>Input A: Equation Editor</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <input type="text" id="eqInput" placeholder="Enter equation (e.g. A + B*C)...">
+                <!-- Preview Buttons (Using data attributes for routing in JS) -->
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-eq-pre" data-target="x" style="flex:1; background:transparent; border:1px solid var(--color-x); color:var(--color-x)">Pre X</button>
+                    <button class="btn-eq-pre" data-target="y" style="flex:1; background:transparent; border:1px solid var(--color-y); color:var(--color-y)">Pre Y</button>
+                    <button class="btn-eq-pre" data-target="z" style="flex:1; background:transparent; border:1px solid var(--color-z); color:var(--color-z)">Pre Z</button>
+                    <button class="btn-eq-pre" data-target="w" style="flex:1; background:transparent; border:1px solid var(--color-w); color:var(--color-w)">Pre W</button>
+                </div>
+                <!-- Set Buttons (Admin Only) -->
+                <div class="admin-only" style="gap: 5px;">
+                    <button class="btn-eq-set" data-target="x" style="flex:1; background:var(--color-x)">Set X</button>
+                    <button class="btn-eq-set" data-target="y" style="flex:1; background:var(--color-y)">Set Y</button>
+                    <button class="btn-eq-set" data-target="z" style="flex:1; background:var(--color-z)">Set Z</button>
+                    <button class="btn-eq-set" data-target="w" style="flex:1; background:var(--color-w)">Set W</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Method B: Interactive K-Map -->
+        <div class="panel" style="flex: 1; min-width: 300px; border-left: 4px solid #d63384;">
+            <div class="help-icon" data-tip="Click cells to toggle bits (0/1). Use 'Pre' to reverse-engineer logic from the map.">?</div>
+            <h3 style="color:#d63384;">Input B: K-Map Scratchpad</h3>
+            
+            <div id="kmap-scratchpad" class="always-dark" style="overflow-x:auto; margin-bottom:10px; padding:10px; border-radius:4px;"></div>
+            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                <button class="btn-kmap-pre" data-target="x" style="flex:1; background:transparent; border:1px solid var(--color-x); color:var(--color-x)">Pre X</button>
+                <button class="btn-kmap-pre" data-target="y" style="flex:1; background:transparent; border:1px solid var(--color-y); color:var(--color-y)">Pre Y</button>
+                <button class="btn-kmap-pre" data-target="z" style="flex:1; background:transparent; border:1px solid var(--color-z); color:var(--color-z)">Pre Z</button>
+                <button class="btn-kmap-pre" data-target="w" style="flex:1; background:transparent; border:1px solid var(--color-w); color:var(--color-w)">Pre W</button>
+            </div>
+            <div class="admin-only" style="gap: 5px; margin-bottom: 5px;">
+                <button class="btn-kmap-set" data-target="x" style="flex:1; background:var(--color-x)">Set X</button>
+                <button class="btn-kmap-set" data-target="y" style="flex:1; background:var(--color-y)">Set Y</button>
+                <button class="btn-kmap-set" data-target="z" style="flex:1; background:var(--color-z)">Set Z</button>
+                <button class="btn-kmap-set" data-target="w" style="flex:1; background:var(--color-w)">Set W</button>
+            </div>
+            <button id="btn-clear-kmap" style="width:100%; background:#555;">Clear Grid</button>
+        </div>
+    </div>
+
+    <!-- 
+        SECTION 5: System State 
+    -->
+    <div class="panel">
+        <div class="help-icon" data-tip="Shows the current logic running on the hardware. SOP = Sum of Products (Minterms). POS = Product of Sums (Maxterms).">?</div>
+        <h3>Current System State (Read Only)</h3>
+        <div class="grid-2x2">
+            <!-- Cards X, Y, Z, W -->
+            <div class="circuit-card" style="border-left-color: var(--color-x);">
+                <h4 style="color:var(--color-x)">Circuit X</h4>
+                <div id="kmap-container-X" class="always-dark" style="overflow-x: auto;"></div>
+                <div class="stats-grid">
+                    <label>SOP:</label> <span id="sop-x" class="code-text">-</span>
+                    <label>POS:</label> <span id="pos-x" class="code-text">-</span>
+                    <label>Min:</label> <span id="min-x" class="code-text">-</span>
+                </div>
+            </div>
+            <div class="circuit-card" style="border-left-color: var(--color-y);">
+                <h4 style="color:var(--color-y)">Circuit Y</h4>
+                <div id="kmap-container-Y" class="always-dark" style="overflow-x: auto;"></div>
+                <div class="stats-grid">
+                    <label>SOP:</label> <span id="sop-y" class="code-text">-</span>
+                    <label>POS:</label> <span id="pos-y" class="code-text">-</span>
+                    <label>Min:</label> <span id="min-y" class="code-text">-</span>
+                </div>
+            </div>
+            <div class="circuit-card" style="border-left-color: var(--color-z);">
+                <h4 style="color:var(--color-z)">Circuit Z</h4>
+                <div id="kmap-container-Z" class="always-dark" style="overflow-x: auto;"></div>
+                <div class="stats-grid">
+                    <label>SOP:</label> <span id="sop-z" class="code-text">-</span>
+                    <label>POS:</label> <span id="pos-z" class="code-text">-</span>
+                    <label>Min:</label> <span id="min-z" class="code-text">-</span>
+                </div>
+            </div>
+            <div class="circuit-card" style="border-left-color: var(--color-w);">
+                <h4 style="color:var(--color-w)">Circuit W</h4>
+                <div id="kmap-container-W" class="always-dark" style="overflow-x: auto;"></div>
+                <div class="stats-grid">
+                    <label>SOP:</label> <span id="sop-w" class="code-text">-</span>
+                    <label>POS:</label> <span id="pos-w" class="code-text">-</span>
+                    <label>Min:</label> <span id="min-w" class="code-text">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+        SECTION 6: Visualizer 
+    -->
+    <div class="panel">
+        <div class="help-icon" data-tip="Interactive wiring diagram. Use checkboxes to toggle circuit visibility. Use the slider above to zoom.">?</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Combined Logic Diagram</h3>
+            <div style="background:var(--bg-input); padding:5px 10px; border-radius:4px;">
+                <label style="color:var(--color-x); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-x" checked> X</label>
+                <label style="color:var(--color-y); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-y" checked> Y</label>
+                <label style="color:var(--color-z); margin-right:10px;"><input type="checkbox" class="chk-viz" id="show-z" checked> Z</label>
+                <label style="color:var(--color-w)"><input type="checkbox" class="chk-viz" id="show-w" checked> W</label>
+            </div>
+        </div>
+        <div id="cy-XY" class="always-dark" style="height: 600px; border: 1px solid var(--border); margin-top:10px; border-radius:4px;"></div>
+    </div>
+
+    <!-- 
+        SECTION 7: Logs 
+    -->
+    <div class="panel">
+        <div class="log-header" style="display:flex; justify-content:space-between;">
+            <h3>System Logs</h3>
+            <button id="dl-btn" style="display:none; background:var(--accent);">📥 CSV</button>
+            <div class="admin-only">
+                <input type="text" id="rawCmd" placeholder="Raw UDP..." style="width:150px; margin-right:5px;">
+                <button id="btn-send-raw" style="background:#555;">Send</button>
+            </div>
+        </div>
+        <div id="server-log" style="background:#000; height:150px; overflow-y:auto; border:1px solid var(--border); padding:10px; font-size:12px; color:#ccc;"></div>
+    </div>
+</div>
+
+<footer style="text-align: center; padding: 20px 0; margin-top: 20px; color: var(--text-muted); font-size: 14px; border-top: 1px solid var(--border);">
+    <p style="margin: 5px 0;">
+        &copy; 2025 Arshia Soleimany | ENSC 351 Final Project | 
+        <a href="https://github.com/ArshiaS1381" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">GitHub</a>
+    </p>
+</footer>
+
+<!-- Main Logic Script -->
+<script src="js/main.js"></script>
+
+</body>
+</html>

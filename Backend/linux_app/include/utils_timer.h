@@ -1,0 +1,39 @@
+/*
+ * File: utils_timer.h
+ * Version: 1.0.0
+ * Description:
+ * Provides high-resolution timing utilities for benchmarking and sequencing.
+ * Essential for the verification suite where precise millisecond-level
+ * delays and timestamping are required to validate logic propagation.
+ */
+
+#ifndef UTILS_TIMER_H
+#define UTILS_TIMER_H
+
+/*
+ * Function: Timer_Init
+ * --------------------
+ * Initializes the system clock or monotonic timer source.
+ * This establishes the "zero" reference point for the application.
+ */
+void Timer_Init(void);
+
+/*
+ * Function: Timer_GetMillis
+ * -------------------------
+ * Retrieves the elapsed time since initialization (or system boot).
+ *
+ * returns: The current timestamp in milliseconds.
+ */
+long long Timer_GetMillis(void);
+
+/*
+ * Function: Timer_SleepMs
+ * -----------------------
+ * Blocks execution of the calling thread for a specified duration.
+ *
+ * ms: The number of milliseconds to sleep.
+ */
+void Timer_SleepMs(int ms);
+
+#endif

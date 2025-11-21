@@ -1,0 +1,32 @@
+{
+  "name": "node_server",
+  "version": "1.0.0",
+  "description": "Web Interface for the Digital Logic Simulation Engine",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run start:core --silent", 
+    "start:core": "npm run prebuild && concurrently --kill-others \"npm:start:node\" \"npm:start:c\"",
+    "start:node": "node server.js",
+    "start:c": "sleep 1 && cd ../../Backend && ./build/logic_sim",
+    "build:sim": "(cmake -S ../../Backend/linux_app -B ../../Backend/build -DBUILD_FOR_BEAGLEY=OFF > /dev/null 2>&1) && cmake --build ../../Backend/build > /dev/null 2>&1",
+    "build:beagley": "TOOLCHAIN_FILE=$(pwd)/../../Backend/linux_app/aarch64-toolchain.cmake; (cmake -S ../../Backend/linux_app -B ../../Backend/build -DBUILD_FOR_BEAGLEY=ON -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE} > /dev/null 2>&1) && cmake --build ../../Backend/build > /dev/null 2>&1",
+    "prebuild": "if [ \"$BUILD_TARGET\" \\= \\\"beagley\\\" ]; then npm run build:beagley; else npm run build:sim; fi"
+  },
+  "keywords": [
+    "logic",
+    "simulation",
+    "k-map",
+    "embedded",
+    "beagley-ai"
+  ],
+  "author": "Arshia Soleimany",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
