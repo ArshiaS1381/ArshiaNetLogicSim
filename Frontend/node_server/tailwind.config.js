@@ -5,8 +5,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'], 
-        mono: ['JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
+        sans: ['Outfit', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
         accent: '#3b82f6', 
@@ -16,7 +16,7 @@ module.exports = {
         'channel-w': '#ef4444', 
       },
       animation: {
-        'blob': 'blob 10s infinite',
+        'blob': 'blob 25s infinite', // Slow breathing speed
         'fade-in': 'fadeIn 0.5s ease-out forwards',
       },
       keyframes: {
@@ -32,9 +32,8 @@ module.exports = {
         }
       },
       boxShadow: {
+        // Glass Rim Lighting
         'glass-edge': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.5), 0 4px 20px rgba(0, 0, 0, 0.05)',
-        'glass-edge-dark': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.4)',
-        'neon': '0 0 10px theme("colors.accent"), 0 0 20px theme("colors.accent")',
       }
     },
   },
