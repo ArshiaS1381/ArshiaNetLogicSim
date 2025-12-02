@@ -1,13 +1,8 @@
 /*
  * File: logic_ast.h
- * Version: 1.0.0
+ * Version: 1.1.0
  * Description:
- * Defines the Abstract Syntax Tree (AST) for digital logic expressions.
- * This is the core data structure used to represent boolean equations
- * (e.g., "A AND B") in memory.
- *
- * The AST allows for recursive evaluation of logic states and is the
- * primary input for the minimization and netlist generation algorithms.
+ * Updated to support NAND and NOR nodes.
  */
 
 #ifndef LOGIC_AST_H
@@ -35,9 +30,8 @@ typedef enum {
     NODE_OR,
     NODE_XOR,
     NODE_NOT,
-    NODE_NAND,
-    NODE_NOR,
-    NODE_XNOR
+    NODE_NAND, // New
+    NODE_NOR   // New
 } NodeType;
 
 /*
@@ -54,7 +48,7 @@ typedef enum {
  */
 typedef struct LogicNode {
     NodeType type;
-    char var_name;
+    char var_name; // Only for NODE_VAR
     struct LogicNode* left;
     struct LogicNode* right;
 } LogicNode;
