@@ -21,9 +21,9 @@
     // --- PIN CONFIGURATION ---
     // Verify these with 'gpioinfo' on your board!
     #define ROT_CHIP "/dev/gpiochip2"
-    #define PIN_DT   5   // Header 29
-    #define PIN_CLK  6   // Header 31
-    #define PIN_SW   13  // Header 33
+    #define PIN_DT   15   // Header 29
+    #define PIN_CLK  17   // Header 31
+    #define PIN_SW   18  // Header 33
 
     #define CLICK_TIMEOUT_MS 300
     #define DEBOUNCE_MS      50
