@@ -1,8 +1,9 @@
 /*
  * File: main.c
- * Version: 1.4.0
+ * Version: 1.5.0
  * Description:
- * Main loop with "Queued: ..." feedback for interactive editing.
+ * Main loop with Explicit State Machine for Mode Switching.
+ * Fixes "Unknown" modes by jumping over enum gaps.
  */
 
 #include <stdio.h>
@@ -39,7 +40,6 @@ const char* get_mode_name(SystemMode m) {
 static int run_menu_index = 0;
 static const char* RUN_MENU_ITEMS[] = { "A", "B", "C", "D", "E", "F" };
 
-// Buffer to track the last printed menu label to prevent console spam
 static char last_print_buf[64] = "";
 
 int main() {
@@ -64,21 +64,29 @@ int main() {
         int rot_delta = HAL_Rotary_GetCount();
         RotaryButtonState rot_btn = HAL_Rotary_GetButtonEvent();
 
-        // 2. Mode Switching & Joystick Edge Detection
-        JoystickDir editor_joy = JOY_CENTER; // Single-event container
+        JoystickDir editor_joy = JOY_CENTER; 
 
+        // 2. Mode Switching (State Machine)
         if (joy != last_joy) {
-            // Only act on the "Press" (Rising Edge) of the joystick
             if (joy != JOY_CENTER) {
-                // Handle Mode Switching (Up/Down)
+                
+                // --- SWITCHING LOGIC START ---
                 if (joy == JOY_DOWN) {
-                    if (current_mode >= MODE_GPIO_EXEC) current_mode = MODE_PROGRAM_X;
-                    else current_mode++;
+                    // Jump explicitly to the next valid mode
+                    switch(current_mode) {
+                        case MODE_PROGRAM_X: current_mode = MODE_PROGRAM_Y; break;
+                        case MODE_PROGRAM_Y: current_mode = MODE_PROGRAM_Z; break;
+                        case MODE_PROGRAM_Z: current_mode = MODE_PROGRAM_W; break;
+                        case MODE_PROGRAM_W: current_mode = MODE_ROTARY_EXEC; break; // Jump gaps
+                        case MODE_ROTARY_EXEC: current_mode = MODE_GPIO_EXEC; break;
+                        case MODE_GPIO_EXEC: current_mode = MODE_PROGRAM_X; break; // Wrap
+                        default: current_mode = MODE_PROGRAM_X; break;
+                    }
                     
                     AppState_SetMode(current_mode);
                     printf("[Mode] Switched to: %s\n", get_mode_name(current_mode));
                     
-                    // Load existing equation into editor
+                    // Load Editor
                     SharedState st = AppState_GetSnapshot();
                     if (current_mode == MODE_PROGRAM_X) Editor_LoadLine(st.input_x);
                     else if (current_mode == MODE_PROGRAM_Y) Editor_LoadLine(st.input_y);
@@ -86,8 +94,16 @@ int main() {
                     else if (current_mode == MODE_PROGRAM_W) Editor_LoadLine(st.input_w);
                 }
                 else if (joy == JOY_UP) {
-                    if (current_mode <= MODE_PROGRAM_X) current_mode = MODE_GPIO_EXEC;
-                    else current_mode--;
+                    // Jump explicitly to previous mode
+                    switch(current_mode) {
+                        case MODE_PROGRAM_X: current_mode = MODE_GPIO_EXEC; break; // Wrap
+                        case MODE_PROGRAM_Y: current_mode = MODE_PROGRAM_X; break;
+                        case MODE_PROGRAM_Z: current_mode = MODE_PROGRAM_Y; break;
+                        case MODE_PROGRAM_W: current_mode = MODE_PROGRAM_Z; break;
+                        case MODE_ROTARY_EXEC: current_mode = MODE_PROGRAM_W; break; // Jump gaps
+                        case MODE_GPIO_EXEC: current_mode = MODE_ROTARY_EXEC; break;
+                        default: current_mode = MODE_PROGRAM_X; break;
+                    }
                     
                     AppState_SetMode(current_mode);
                     printf("[Mode] Switched to: %s\n", get_mode_name(current_mode));
@@ -98,8 +114,8 @@ int main() {
                     else if (current_mode == MODE_PROGRAM_Z) Editor_LoadLine(st.input_z);
                     else if (current_mode == MODE_PROGRAM_W) Editor_LoadLine(st.input_w);
                 }
+                // --- SWITCHING LOGIC END ---
                 
-                // Capture Left/Right for the Editor (Logic Menu)
                 if (joy == JOY_LEFT || joy == JOY_RIGHT) {
                     editor_joy = joy;
                 }
@@ -110,34 +126,24 @@ int main() {
         // 3. Execution Logic
         if (current_mode >= MODE_PROGRAM_X && current_mode <= MODE_PROGRAM_W) {
             
-            // Pass Rotary and Joystick events to Editor State
             Editor_UpdateState(rot_delta, editor_joy);
             
-            // --- SMART MENU PRINTING ---
             const char* current_label = Editor_GetMenuLabel();
             if (strcmp(last_print_buf, current_label) != 0) {
                 printf("  [Editor] %s > %s\n", get_mode_name(current_mode), current_label);
                 strncpy(last_print_buf, current_label, 63);
             }
-            // ---------------------------
 
-            // Handle Button Press (Insert/Delete/Set)
             EditorResult res = Editor_HandleButton(rot_btn);
             
             if (res == EDITOR_RESULT_MODIFIED) {
-                // 1. Flash LED for feedback
                 flash_active = true;
                 led_flash_start = Timer_GetMillis();
-                
-                // 2. REQUIRED: Print "Queued: <Buffer>"
                 printf("Queued: %s\n", Editor_GetLine());
-                
-                // 3. Update stateless preview (for web/LEDs)
                 Process_Stateless("preview", Editor_GetLine());
             }
             else if (res == EDITOR_RESULT_SAVE) {
                 const char* final_eq = Editor_GetLine();
-                // Save to State
                 if (current_mode == MODE_PROGRAM_X) AppState_SetInputX(final_eq);
                 else if (current_mode == MODE_PROGRAM_Y) AppState_SetInputY(final_eq);
                 else if (current_mode == MODE_PROGRAM_Z) AppState_SetInputZ(final_eq);
@@ -152,7 +158,6 @@ int main() {
             }
         }
         else if (current_mode == MODE_ROTARY_EXEC) {
-            // Cycle A-F and Toggle
             if (rot_delta != 0) {
                 run_menu_index += rot_delta;
                 while (run_menu_index < 0) run_menu_index += 6;
@@ -161,7 +166,7 @@ int main() {
             }
             
             if (rot_btn == ROT_BTN_CLICK) {
-                int bit = run_menu_index; // A=0
+                int bit = run_menu_index; 
                 uint8_t mask = AppState_GetInputMask();
                 mask ^= (1 << bit);
                 AppState_SetInputMask(mask);
@@ -169,7 +174,7 @@ int main() {
             }
         }
 
-        // 4. Global Updates (LEDs & Outputs)
+        // 4. Updates
         if (AppState_IsDirty()) {
             SharedState st = AppState_GetSnapshot();
             
@@ -184,7 +189,6 @@ int main() {
             Send_Combined_Update(st.input_x, st.input_y, st.input_z, st.input_w);
             NetUDP_BroadcastState();
 
-            // Hardware Output
             LogicNode* rx = Parser_ParseString(st.input_x);
             LogicNode* ry = Parser_ParseString(st.input_y);
             LogicNode* rz = Parser_ParseString(st.input_z);
@@ -200,14 +204,12 @@ int main() {
             HAL_GPIO_Write(GPIO_OUT_Z, val_z);
             HAL_GPIO_Write(GPIO_OUT_W, val_w);
             
-            // --- LED OUTPUT MAPPING ---
             if (flash_active) {
                 if (Timer_HasElapsed(led_flash_start, 150)) flash_active = false;
-                else HAL_LED_SetRGB(255, 255, 0); // Yellow Flash
+                else HAL_LED_SetRGB(255, 255, 0); 
             } 
             
             if (!flash_active) {
-                // Green = X, Red = Y
                 HAL_LED_SetRGB(val_y ? 255 : 0, val_x ? 255 : 0, 0);
             }
 
